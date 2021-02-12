@@ -34,6 +34,15 @@ import backtrader.indicators as btind
 import pandas as pd
 from pivotpoint import PivotPoint, PivotPoint1
 
+def time2date(cus_time):
+    return datetime.datetime.strptime(cus_time, "%Y-%m-%d").date()
+
+def df2time():
+    pass
+
+def time2df(cust_time):
+    pass
+
 def parse_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -52,35 +61,17 @@ def parse_args():
     parser.add_argument('--plot-on-daily', required=False, action='store_true',
                         help=('Plot the indicator on the daily data'))
 
+    parser.add_argument('--noheaders', action='store_true', default=False,
+                        required=False,
+                        help='Do not use header rows')
+
+    parser.add_argument('--noprint', action='store_true', default=False,
+                        help='Print the dataframe')
+
     return parser.parse_args()
-
-class PivotPoint2(bt.Indicator):
-    lines = ('p', 's1', 's2', 'r1', 'r2', 'p2')
-    plotinfo = dict(subplot=False)
-
-    def __init__(self):
-        h = self.data.high  # current high
-        l = self.data.low  # current high
-        c = self.data.close  # current high
-
-        self.lines.p = p = (h + l + c) / 3.0
-
-        print("type = %s" % type(self.lines.p))
-        p2 = p * 2.0
-        self.lines.s1 = p2 - h  # (p x 2) - high
-        self.lines.r1 = p2 - l  # (p x 2) - low
-        self.p.x2 = datetime.datetime.strptime("2005-04-22", "%Y-%m-%d").date()
-        self.p.y2 = dataframe.loc[self.p.x2, "Close"]
-        print("self.p.y2 = %s" %self.p.y2)
-        self.lines.p2 = int(self.p.y2) * p2 / p2
-
-        hilo = h - l
-        self.lines.s2 = p - hilo  # p - (high - low)
-        self.lines.r2 = p + hilo  # p + (high - low)
 
 
 class St(bt.Strategy):
-    lines = ('signal','trend')
     params = (('usepp1', False),
               ('plot_on_daily', False),
               ('x1', None),
@@ -89,64 +80,54 @@ class St(bt.Strategy):
               ('y2', None))
 
     def __init__(self):
-        self.p.x1 = datetime.datetime.strptime("2005-01-28", "%Y-%m-%d").date()
-        self.p.x2 = datetime.datetime.strptime("2005-04-22", "%Y-%m-%d").date()
+        pass
+        #if self.p.usepp1:
+        #    self.pp = PivotPoint1(self.data1)
+        #else:
+        #    self.pp = PivotPoint2(self.data1)
 
-        self.p.y1 = dataframe.loc[self.p.x1, "Close"]
-        self.p.y2 = dataframe.loc[self.p.x2, "Close"]
-        print("self.p.x1 = %s" %self.p.x1)
-        print("self.p.x2 = %s" %self.p.x2)
-        print("self.p.y1 = %s" %self.p.y1)
-        print("self.p.y2 = %s" %self.p.y2)
-        if self.p.usepp1:
-            self.pp = PivotPoint1(self.data1)
-        else:
-            self.pp = PivotPoint2(self.data1)
-
-        if self.p.plot_on_daily:
-            self.pp.plotinfo.plotmaster = self.data0
-        #pprint(vars(self.p))
-        #pprint(vars(self.pp.lines))
+        #if self.p.plot_on_daily:
+        #    self.pp.plotinfo.plotmaster = self.data0
+        # must convert self.p.x1 and x2 to timestamp
 
     def next(self):
         txt = ','.join(
             ['%04d' % len(self),
              '%04d' % len(self.data0),
              '%04d' % len(self.data1),
-             '%04d' % 3000,
+             #'%04d' % 3000,
              self.data.datetime.date(0).isoformat(),
-             '%04d' % len(self.pp),
-             '%.2f' % self.pp[0]],
+             '%s' %self.data0.datetime.datetime()]
              )
-        print("lines = %s, %s, %s, %s, %s, %s" %(self.pp.lines.p[0], self.pp.lines.s1[0], self.pp.lines.s2[0], self.pp.lines.r1[0], self.pp.lines.r2[0], self.pp.lines.p2[0]))
-        #print(txt)
+        print(txt)
 
 if __name__ == '__main__':
     args = parse_args()
 
     cerebro = bt.Cerebro(stdstats=False)
 
-    cerebro.addstrategy(St,
-                        usepp1=args.usepp1,
-                        plot_on_daily=args.plot_on_daily)
+    cerebro.addstrategy(St, plot_on_daily=args.plot_on_daily)
 
     datapath = "../../datas/2005-2006-day-001.txt"
     print("datapath =%s" %datapath)
+    skiprows = 1 if args.noheaders else 0
+    header = None if args.noheaders else 0
     dataframe = pd.read_csv(datapath,
-                                skiprows=0,
-                                header=0,
-                                parse_dates=True,
                                 index_col=0)
-
+    print(dataframe.index)
     dataframe.index = pd.to_datetime(dataframe.index, format='%Y-%m-%d')
+    #dataframe.test = pd.DataFrame(datapath, index = ['Date','Open','High','Low','Close','Volume','OpenInterest'])
 
-    #if not args.noprint:
     print('--------------------------------------------------')
-    #print(dataframe)
+    print(dataframe)
     print('--------------------------------------------------')
 
     # Pass it to the backtrader datafeed and add it to the cerebro
     data = bt.feeds.PandasData(dataname=dataframe)
+
+    print('--------------------------------------------------')
+    #pprint(data)
+    print('--------------------------------------------------')
 
     cerebro.adddata(data)
 
@@ -155,7 +136,3 @@ if __name__ == '__main__':
     cerebro.run(runonce=False)
     if args.plot:
         cerebro.plot(style='bar')
-
-
-#if __name__ == '__main__':
-#    runstrat()

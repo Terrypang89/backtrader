@@ -34,6 +34,16 @@ import backtrader.indicators as btind
 import pandas as pd
 from pivotpoint import PivotPoint, PivotPoint1
 
+def time2date(cus_time):
+    return datetime.datetime.strptime(cus_time, "%Y-%m-%d").date()
+
+def df2time():
+    pass
+
+def time2df(cust_time):
+    pass
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -69,7 +79,7 @@ class PivotPoint2(bt.Indicator):
         p2 = p * 2.0
         self.lines.s1 = p2 - h  # (p x 2) - high
         self.lines.r1 = p2 - l  # (p x 2) - low
-        self.p.x2 = datetime.datetime.strptime("2005-04-22", "%Y-%m-%d").date()
+        self.p.x2 = time2date("2005-04-22")
         self.p.y2 = dataframe.loc[self.p.x2, "Close"]
         print("self.p.y2 = %s" %self.p.y2)
         self.lines.p2 = int(self.p.y2) * p2 / p2
@@ -89,8 +99,8 @@ class St(bt.Strategy):
               ('y2', None))
 
     def __init__(self):
-        self.p.x1 = datetime.datetime.strptime("2005-01-28", "%Y-%m-%d").date()
-        self.p.x2 = datetime.datetime.strptime("2005-04-22", "%Y-%m-%d").date()
+        self.p.x1 = time2date("2005-01-28")
+        self.p.x2 = time2date("2006-05-31")
 
         self.p.y1 = dataframe.loc[self.p.x1, "Close"]
         self.p.y2 = dataframe.loc[self.p.x2, "Close"]
@@ -105,8 +115,18 @@ class St(bt.Strategy):
 
         if self.p.plot_on_daily:
             self.pp.plotinfo.plotmaster = self.data0
-        #pprint(vars(self.p))
-        #pprint(vars(self.pp.lines))
+        # must convert self.p.x1 and x2 to timestamp
+
+        x1_time_stamp = bt.date2num(self.p.x1)
+        x2_time_stamp = bt.date2num(self.p.x2)
+        print("x1_time_stamp = %s" %x1_time_stamp)
+        print("x2_time_stamp = %s" %x2_time_stamp)
+        self.m = self.get_slope(x1_time_stamp, x2_time_stamp, self.p.y1, self.p.y2)
+        print("self.m =%s" %self.m )
+        self.B = self.get_y_intercept(self.m, x1_time_stamp, self.p.y1)
+        print("self.B =%s" %self.B )
+        self.plotlines.trend._plotskip = True
+
 
     def next(self):
         txt = ','.join(
@@ -118,8 +138,44 @@ class St(bt.Strategy):
              '%04d' % len(self.pp),
              '%.2f' % self.pp[0]],
              )
-        print("lines = %s, %s, %s, %s, %s, %s" %(self.pp.lines.p[0], self.pp.lines.s1[0], self.pp.lines.s2[0], self.pp.lines.r1[0], self.pp.lines.r2[0], self.pp.lines.p2[0]))
-        #print(txt)
+        date_ori = self.data0.datetime.datetime()
+        date_timestamp = bt.date2num(date_ori)
+        date_back = bt.num2date(date_timestamp).date()
+
+        Y = self.get_y(date_timestamp)
+        self.lines.trend[0] = Y
+
+        #print("lines = (%s), [%s], (%s), %s, %s, %s, %s, %s, %s, %s" %(date_ori, date_timestamp, date_back, self.pp.lines.p[0], self.pp.lines.s1[0], self.pp.lines.s2[0], self.pp.lines.r1[0], self.pp.lines.r2[0], self.pp.lines.p2[0], Y))
+        print("lines = (%s), [%s], (%s), Y=%s, high=%s, low=%s, signal[-1]=%s" %(date_ori, date_timestamp, date_back, Y, self.data0.high[0], self.data0.low[0], self.lines.signal[-1]))
+
+        if self.data0.high[-1] < Y and self.data0.high[0] > Y:
+            self.lines.signal[0] = -1
+            return
+
+        elif self.data0.low[-1] > Y and self.data0.low[0] < Y:
+            self.lines.signal[0] = 1
+            return
+
+        else:
+            self.lines.signal[0] = 0
+            return
+
+
+    def get_slope(self, x1,x2,y1,y2):
+        print("x1 = %s" %x1)
+        print("y1 = %s" %y1)
+        print("x2 = %s" %x2)
+        print("y2 = %s" %y2)
+        m = (y2-y1)/(x2-x1)
+        return m
+
+    def get_y_intercept(self, m, x1, y1):
+        b=y1-m*x1
+        return b
+
+    def get_y(self,ts):
+        Y = self.m * ts + self.B
+        return Y
 
 if __name__ == '__main__':
     args = parse_args()

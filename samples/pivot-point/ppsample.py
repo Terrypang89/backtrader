@@ -27,23 +27,56 @@ import backtrader as bt
 import backtrader.feeds as btfeeds
 import backtrader.utils.flushfile
 
+from pivotpoint import PivotPoint, PivotPoint1
+
+class PivotPoint3(bt.Indicator):
+    lines = ('p', 's1', 's2', 'r1', 'r2', 'r3')
+    plotinfo = dict(subplot=False)
+
+    def __init__(self):
+        h = self.data.high  # current high
+        l = self.data.low  # current high
+        c = self.data.close  # current high
+
+        self.lines.p = p = (h + l + c) / 3.0
+
+        #print("type = %s" % type(self.lines.p))
+        p2 = p * 2.0
+        self.lines.s1 = p2 - h  # (p x 2) - high
+        self.lines.r1 = p2 - l  # (p x 2) - low
+
+        hilo = h - l
+        self.lines.s2 = p - hilo  # p - (high - low)
+        self.lines.r2 = p + hilo  # p + (high - low)
+
+    def next(self):
+        print("check PivotPoint3 current date= %s" %self.data.datetime.date(0))
 
 class St(bt.Strategy):
     params = (('usepp1', False),
               ('plot_on_daily', False))
 
     def __init__(self):
+        if self.p.usepp1:
+            self.pp = PivotPoint1(self.data1)
+        else:
+            #self.pp = PivotPoint(self.data1)
+            self.pp = PivotPoint3(self.data1)
         autoplot = self.p.plot_on_daily
         self.pp = pp = bt.ind.PivotPoint(self.data1, _autoplot=autoplot)
 
+        if self.p.plot_on_daily:
+            self.pp.plotinfo.plotmaster = self.data0
+
     def next(self):
-        txt = ','.join(
-            ['%04d' % len(self),
+        txt = ['%04d' % len(self),
              '%04d' % len(self.data0),
              '%04d' % len(self.data1),
-             self.data.datetime.date(0).isoformat(),
+             '%04d' % 3000,
+             #self.data.datetime.date(0).isoformat(),
              '%04d' % len(self.pp),
-             '%.2f' % self.pp[0]])
+             '%.2f' % self.pp[0],
+            'St current date= %s' %self.data.datetime.date(0)]
 
         print(txt)
 
@@ -54,6 +87,7 @@ def runstrat():
     cerebro = bt.Cerebro()
     data = btfeeds.BacktraderCSVData(dataname=args.data)
     cerebro.adddata(data)
+    #cerebro.resampledata(data)
     cerebro.resampledata(data, timeframe=bt.TimeFrame.Months)
 
     cerebro.addstrategy(St,
@@ -61,7 +95,7 @@ def runstrat():
                         plot_on_daily=args.plot_on_daily)
     cerebro.run(runonce=False)
     if args.plot:
-        cerebro.plot(style='bar')
+        cerebro.plot(style='candle')
 
 
 def parse_args():
@@ -72,6 +106,9 @@ def parse_args():
     parser.add_argument('--data', required=False,
                         default='../../datas/2005-2006-day-001.txt',
                         help='Data to be read in')
+
+    parser.add_argument('--usepp1', required=False, action='store_true',
+                        help='Have PivotPoint look 1 period backwards')
 
     parser.add_argument('--plot', required=False, action='store_true',
                         help=('Plot the result'))

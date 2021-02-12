@@ -23,9 +23,8 @@ from __future__ import (absolute_import, division, print_function,)
 
 import backtrader as bt
 
-
 class PivotPoint1(bt.Indicator):
-    lines = ('p', 's1', 's2', 'r1', 'r2',)
+    lines = ('p', 's1', 's2', 'r1', 'r2')
 
     def __init__(self):
         h = self.data.high(-1)  # previous high
@@ -44,7 +43,7 @@ class PivotPoint1(bt.Indicator):
 
 
 class PivotPoint(bt.Indicator):
-    lines = ('p', 's1', 's2', 'r1', 'r2',)
+    lines = ('p', 's1', 's2', 'r1', 'r2', 'r3')
     plotinfo = dict(subplot=False)
 
     def __init__(self):
@@ -54,6 +53,28 @@ class PivotPoint(bt.Indicator):
 
         self.lines.p = p = (h + l + c) / 3.0
 
+        print("type = %s" % type(self.lines.p))
+        p2 = p * 2.0
+        self.lines.s1 = p2 - h  # (p x 2) - high
+        self.lines.r1 = p2 - l  # (p x 2) - low
+        self.lines.r3 = p2  # (p x 2) - low
+
+        hilo = h - l
+        self.lines.s2 = p - hilo  # p - (high - low)
+        self.lines.r2 = p + hilo  # p + (high - low)
+
+class PivotPoint2(bt.Indicator):
+    lines = ('p', 's1', 's2', 'r1', 'r2', 'r3')
+    plotinfo = dict(subplot=False)
+
+    def __init__(self):
+        h = self.data.high  # current high
+        l = self.data.low  # current high
+        c = self.data.close  # current high
+
+        self.lines.p = p = (h + l + c) / 3.0
+
+        print("type = %s" % type(self.lines.p))
         p2 = p * 2.0
         self.lines.s1 = p2 - h  # (p x 2) - high
         self.lines.r1 = p2 - l  # (p x 2) - low
