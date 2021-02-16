@@ -132,8 +132,9 @@ class PivotPoint2(bt.Indicator):
 
             advance2high = 1
             advance_detect_type = 0
-
-            while True:
+            loop2low_detect = 0
+            loop2high_detect = 0
+            while loop2low_detect == 0:
                 for x2 in range(offset_val, 0):
                     #detected max_datetime in the middle of next lower detection, so just get the lowest in between:
                     if self.data0.datetime.date(advance2high+abs(x2)) == max_datetime:
@@ -162,19 +163,27 @@ class PivotPoint2(bt.Indicator):
                         print("advance2high = %d, data.date(%d) = %s == min_date = %s, end_low_detection = %d, end_low_datetime = %s, x2_time_stamp = %d " %(advance2high, advance2high+x2, self.data0.datetime.date(advance2high+x2), min_datetime, begin_low_detection ,begin_low_datetime, x2_time_stamp))
                         break
                     # to detect next lowest peak
-                    elif data.low[advance2high] < data.low[advance2high+abs(x2)] and data.low[advance2high] < data.low[advance2high+x2]:
-                        advance_detect_type = "low"
-                        prev_detected_type = "low"
-                        prev_predicted_time = self.data0.datetime.date(x2)
-
+                else:
+                        if data.low[advance2high] < data.low[advance2high+abs(x2)] and data.low[advance2high] < data.low[advance2high+x2]:
+                            advance_detect_type = "low"
+                            #prev_detected_type = "low"
+                            #prev_predicted_time = self.data0.datetime.date(x2)
+                        else:
+                            advance_detect_type = "0"
                         # start drawing x2, y2
-                        self.p.x2 = self.data0.datetime.date(advance2high)
-                        self.p.y2 = data.low[advance2high]
-                        x2_time_stamp = bt.date2num(self.p.x2)
-                        print("advance2high = %d, data.date(%d) = %s, data.date(%d) = %s, prev_detected_type = %s, self.p.x2 = %s, self.p.y2 = %d, x2_time_stamp = %d " %(advance2high, advance2high+abs(x2), self.data0.datetime.date(advance2high+abs(x2)), advance2high+x2, self.data0.datetime.date(advance2high+x2), prev_detected_type, self.p.x2, self.p.y2, x2_time_stamp))
+                        #self.p.x2 = self.data0.datetime.date(advance2high)
+                        #self.p.y2 = data.low[advance2high]
+                        #x2_time_stamp = bt.date2num(self.p.x2)
+                        #print("advance2high = %d, data.date(%d) = %s, data.date(%d) = %s, prev_detected_type = %s, self.p.x2 = %s, self.p.y2 = %d, x2_time_stamp = %d " %(advance2high, advance2high+abs(x2), self.data0.datetime.date(advance2high+abs(x2)), advance2high+x2, self.data0.datetime.date(advance2high+x2), prev_detected_type, self.p.x2, self.p.y2, x2_time_stamp))
                         #break
-                    #print("secodn test")
+                #print("second test")
+                if advance_detect_type == "low":
+                    loop2low_detect = 1
+                advance2high = advance2high+1
+            advance2high = 1
 
+            while loop2high_detect == 0:
+                for x2 in range(offset_val, 0):
                     if self.data0.datetime.date(advance2high+abs(x2)) == max_datetime:
                         if advance_detect_type == 0: # didnt detected low so
                             end_highlow_detection = data.low[advance2high]
@@ -201,38 +210,48 @@ class PivotPoint2(bt.Indicator):
                             x2_time_stamp = bt.date2num(self.p.x2)
                             print("2nd2 advance2high = %d, data.date(%d) = %s == min_date = %s, begin_highlow_detection = %d, begin_highlow_datetime = %s, x2_time_stamp = %d " %(advance2high, advance2high+x2, self.data0.datetime.date(advance2high+x2), min_datetime, begin_highlow_detection ,begin_highlow_datetime, x2_time_stamp))
                             break
-                    elif data.high[advance2high] > data.high[advance2high+abs(x2)] and data.high[advance2high] > data.high[advance2high+x2]:# high, low, high detected
-                        #if detected high, high without between low, as detection must be currect high, then low, then high
-                        if advance_detect_type == 0:
-                            middle_low_detection = data.low[0]
-                            middle_low_datetime = self.data0.datetime.date(0)
-                            # get the lowest low compared in between current high and detected next high
-                            for x3 in range(0, advance2high):
-                                if data.low[x3] < middle_low_detection:
-                                    middle_low_detection = data.low[x3]
-                                    middle_low_datetime = self.data0.datetime.date(x3)
-                            prev_detected_type = "low"
-                            prev_predicted_time = middle_low_datetime
-                            # start drawing x2, y2
-                            self.p.x2 = middle_low_datetime
-                            self.p.y2 = middle_low_detection #dataframe.loc[self.p.x2, "Low"]
-                            x2_time_stamp = bt.date2num(self.p.x2)
-                            print("2nd3 advance2high = %d, data.date(%d) = %s, data.date(%d) = %s, prev_detected_type = %s, self.p.x2 = %s, self.p.y2 = %d, x2_time_stamp = %d " %(advance2high, advance2high+abs(x2), self.data0.datetime.date(advance2high+abs(x2)), advance2high+x2, self.data0.datetime.date(advance2high+x2), prev_detected_type, self.p.x2, self.p.y2, x2_time_stamp))
-                            break
-                        else:
-                            #got detected prev is high, low so this as high
-                            advance_detect_type = "high"
-                            print("detected prev low")
-                            break
-                #loop for until low and high detected
+                    else:
+                        if advance_detect_type == 0 :
+                            if data.high[advance2high] < data.high[advance2high+abs(x2)] and data.high[advance2high] < data.high[advance2high+x2]:# high, low, high detected
+                                advance_detect_type = 0
+                                loop2high_detect = 1
+                        elif advance_detect_type == "low":
+                            loop2high_detect = 1
                 advance2high = advance2high+1
 
-                #change plotting gradient m and y_intercept B, to set high, low
-                print("PLOTTING x1_time_stamp = %d, x2_time_stamp = %d, self.p.x1 = %s, self.p.x2 = %s, self.p.y1 = %d, self.p.y2 = %d" %(x1_time_stamp, x2_time_stamp, self.p.x1, self.p.x2, self.p.y1, self.p.y2))
-                self.m = self.get_slope(x1_time_stamp, x2_time_stamp, self.p.y1, self.p.y2)
-                self.B = self.get_y_intercept(self.m, x1_time_stamp, self.p.y1)
+            #if detected high, high without between low, as detection must be currect high, then low, then high
+            if advance_detect_type == 0:
+                middle_low_detection = data.low[0]
+                middle_low_datetime = self.data0.datetime.date(0)
+                # get the lowest low compared in between current high and detected next high
+                for x3 in range(0, advance2high):
+                    if data.low[x3] < middle_low_detection:
+                        middle_low_detection = data.low[x3]
+                        middle_low_datetime = self.data0.datetime.date(x3)
+                prev_detected_type = "low"
+                prev_predicted_time = middle_low_datetime
+                # start drawing x2, y2
+                self.p.x2 = middle_low_datetime
+                self.p.y2 = middle_low_detection #dataframe.loc[self.p.x2, "Low"]
+                x2_time_stamp = bt.date2num(self.p.x2)
+                print("2nd3 advance2high = %d, data.date(%d) = %s, data.date(%d) = %s, prev_detected_type = %s, self.p.x2 = %s, self.p.y2 = %d, x2_time_stamp = %d " %(advance2high, advance2high+abs(x2), self.data0.datetime.date(advance2high+abs(x2)), advance2high+x2, self.data0.datetime.date(advance2high+x2), prev_detected_type, self.p.x2, self.p.y2, x2_time_stamp))
+                #break
+            elif advance_detect_type == "low":
+                #got detected prev is high, low so this as high
+                advance_detect_type = "high"
+                self.p.x2 = self.data0.datetime.date(advance2high)
+                self.p.y2 = data.low[advance2high]
+                x2_time_stamp = bt.date2num(self.p.x2)
+                print("detected prev low")
+                #break
+            #loop for until low and high detected
 
-                return prev_predicted_time, prev_detected_type
+            #change plotting gradient m and y_intercept B, to set high, low
+            #print("PLOTTING x1_time_stamp = %d, x2_time_stamp = %d, self.p.x1 = %s, self.p.x2 = %s, self.p.y1 = %d, self.p.y2 = %d" %(x1_time_stamp, x2_time_stamp, self.p.x1, self.p.x2, self.p.y1, self.p.y2))
+            self.m = self.get_slope(x1_time_stamp, x2_time_stamp, self.p.y1, self.p.y2)
+            self.B = self.get_y_intercept(self.m, x1_time_stamp, self.p.y1)
+
+            return prev_predicted_time, prev_detected_type
         """
         elif detect_highpeak_true == 0 and detect_lowpeak_true == 1: #detected high peak
             advance2low = 1
