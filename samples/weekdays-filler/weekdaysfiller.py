@@ -54,6 +54,7 @@ class WeekDaysFiller(object):
                 if self.fillclose:
                     self.voidbar = [self.lastclose] * data.size()
                 dtime = datetime.datetime.combine(lastdt, data.p.sessionend)
+                print("check dtime = %s" %dtime)
                 self.voidbar[-1] = data.date2num(dtime)
                 data._add2stack(self.voidbar[:])
 

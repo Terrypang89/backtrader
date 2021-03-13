@@ -65,7 +65,7 @@ def runstrat(args=None):
     data0 = bt.feeds.BacktraderCSVData(dataname=args.data0, **kwargs)
     cerebro.adddata(data0)
 
-    cerebro.resampledata(data0, timeframe=bt.TimeFrame.Weeks)
+    #cerebro.resampledata(data0, timeframe=bt.TimeFrame.Weeks)
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
@@ -81,7 +81,6 @@ def runstrat(args=None):
 
     if args.plot:  # Plot if requested to
         cerebro.plot(**eval('dict(' + args.plot + ')'))
-
 
 def parse_args(pargs=None):
     parser = argparse.ArgumentParser(

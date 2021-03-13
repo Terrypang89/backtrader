@@ -63,6 +63,7 @@ class DayStepsCloseFilter(bt.with_metaclass(bt.MetaParams, object)):
         ohlbar[data.Volume] = int(closebar[data.Volume] * (1.0 - self.p.cvol))
 
         dt = datetime.datetime.combine(datadt, data.p.sessionstart)
+        print("dt date2num = %s" %dt)
         ohlbar[data.DateTime] = data.date2num(dt)
 
         dt = datetime.datetime.combine(datadt, data.p.sessionend)
@@ -144,6 +145,7 @@ class DayStepsReplayFilter(bt.with_metaclass(bt.MetaParams, object)):
 
         # Adjust times
         dt = datetime.datetime.combine(datadt, data.p.sessionstart)
+        print("DATE2NUM = %s" %dt)
         ohlbar[data.DateTime] = data.date2num(dt)
 
         # Ajust closebar to generate a single tick -> close price
@@ -155,6 +157,7 @@ class DayStepsReplayFilter(bt.with_metaclass(bt.MetaParams, object)):
 
         # Adjust times
         dt = datetime.datetime.combine(datadt, data.p.sessionend)
+        print("DATE2NUM = %s" %dt)
         closebar[data.DateTime] = data.date2num(dt)
 
         # Update stream

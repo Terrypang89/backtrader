@@ -23,7 +23,8 @@ from __future__ import (absolute_import, division, print_function,
 
 import argparse
 import datetime
-
+import time
+from pprint import pprint
 # The above could be sent to an independent module
 import backtrader as bt
 import backtrader.feeds as btfeeds
@@ -62,13 +63,38 @@ class LongShortStrategy(bt.Strategy):
         # To control operation entries
         self.orderid = None
 
+
         # Create SMA on 2nd data
         sma = btind.MovAv.SMA(self.data, period=self.p.period)
         # Create a CrossOver Signal from close an moving average
         self.signal = btind.CrossOver(self.data.close, sma)
         self.signal.csv = self.p.csvcross
 
+    def start(self):
+        print("hello start")
+        #pprint(vars(self.analyzers))
+        #pprint(vars(self.data.line))
+        #2005-01-03 until 2006-12-29, as 2006-12-29 which will be data[0]
+        print("data[0] 25.540001 = %s" %self.data.line[0])
+        #print("data[-1] 25.360001 = %s" %self.data.line[-1])
+        print("self.data.line6[0] = %s" %self.data.line6[0])
+        print("self.data.line6[0] to date = %s" %bt.num2date(self.data.line6[0]))
+        #print("test = %s" %datetime.datetime(2012, 6, 10, 16, 36, 20))
+        #print("test date2num value = $s" %bt.date2num(datetime.datetime.strptime("2008-12-01T00:00:59.000000", '%Y-%m-%dT%H:%M:%S.%f')))
+        print("convert to timestamep = %d" %time.mktime(datetime.datetime.strptime("2014-12-30 23:59:59.999989", "%Y-%m-%d %H:%M:%S.%f").timetuple()))
+        #print("convert2timestamep = %d" %time.mktime(datetime.datetime.strptime("2014-12-30 23:59:59.999989", "%Y-%m-%d %H:%M:%S.%f").timetuple()))
+        print("date convert datetime: %s" %datetime.datetime.strptime("2014-12-30 23:59:59.999989", "%Y-%m-%d %H:%M:%S.%f"))
+        print("convert2timestamep = %s" %bt.date2num(datetime.datetime.strptime("2014-12-30 23:59:59.999989", "%Y-%m-%d %H:%M:%S.%f")))
+
+    def prenext(self):
+        #pprint(vars(self.data))
+        #print("hello prenext") # which run 15 times
+        pass
+
     def next(self):
+        #print("next")
+        #pprint(vars(self.analyzers))
+        #print(" next self.data.line6[0] = %s" %bt.num2date(self.data.line6[0]))
         if self.orderid:
             return  # if an order is active, no new orders are allowed
 
@@ -116,6 +142,10 @@ class LongShortStrategy(bt.Strategy):
         elif trade.justopened:
             self.log('TRADE OPENED, SIZE %2d' % trade.size)
 
+    def stop(self):
+        print("stop--------------------------------------------------------------")
+        #pprint(vars(self.data.line6))
+        #print("self.data.line6[0] = %s" %bt.num2date(self.data.line6[0]))
 
 def runstrategy():
     args = parse_args()
@@ -177,12 +207,12 @@ def runstrategy():
     if args.plot:
         cerebro.plot(numfigs=args.numfigs, volume=False, zdown=False)
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='TimeReturn')
 
     parser.add_argument('--data', '-d',
-                        default='../../datas/2005-2006-day-001.txt',
+                        #default='../../datas/2005-2006-day-001.txt',
+                        default='../../datas/yhoo-1996-2014.txt',
                         help='data to add to the system')
 
     parser.add_argument('--fromdate', '-f',
@@ -190,7 +220,8 @@ def parse_args():
                         help='Starting date in YYYY-MM-DD format')
 
     parser.add_argument('--todate', '-t',
-                        default='2006-12-31',
+                        #default='2006-12-31',
+                        default='2014-12-31',
                         help='Starting date in YYYY-MM-DD format')
 
     parser.add_argument('--period', default=15, type=int,

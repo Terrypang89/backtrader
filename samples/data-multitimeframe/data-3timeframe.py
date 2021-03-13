@@ -80,13 +80,17 @@ class SMAStrategy(bt.Strategy):
             dtfmt = '%Y-%m-%dT%H:%M:%S.%f'
             txt.append('{:f}'.format(self.data1.datetime[0]))
             txt.append('%s' % self.data1.datetime.datetime(0).strftime(dtfmt))
-            # txt.append('{}'.format(self.data1.open[0]))
-            # txt.append('{}'.format(self.data1.high[0]))
-            # txt.append('{}'.format(self.data1.low[0]))
             txt.append('{}'.format(self.data1.close[0]))
-            # txt.append('{}'.format(self.data1.volume[0]))
-            # txt.append('{}'.format(self.data1.openinterest[0]))
-            # txt.append('{}'.format(float('NaN')))
+            print(', '.join(txt))
+
+        if len(self.datas) > 2 and len(self.data2):
+            txt = list()
+            txt.append('Data2')
+            txt.append('%04d' % len(self.data2))
+            dtfmt = '%Y-%m-%dT%H:%M:%S.%f'
+            txt.append('{:f}'.format(self.data2.datetime[0]))
+            txt.append('%s' % self.data2.datetime.datetime(0).strftime(dtfmt))
+            txt.append('{}'.format(self.data2.close[0]))
             print(', '.join(txt))
 
 
@@ -121,7 +125,44 @@ def runstrat():
     # Handy dictionary for the argument timeframe conversion
     # Resample the data
     if args.noresample:
-        datapath = args.dataname2 or './datas/2006-week-001.txt'
+        datapath = args.dataname1 or './datas/2006-week-001.txt'
+        data1 = btfeeds.BacktraderCSVData(
+            dataname=datapath)
+        print("args.noresample")
+    else:
+        if args.oldrs:
+            if args.replay:
+                data1 = bt.DataReplayer(
+                    dataname=data,
+                    timeframe=tframes[args.timeframe],
+                    compression=args.compression)
+            else:
+                data1 = bt.DataResampler(
+                    dataname=data,
+                    timeframe=tframes[args.timeframe],
+                    compression=args.compression)
+            print("not args.noresample and args.oldrs")
+        else:
+            data1 = bt.DataClone(dataname=data)
+            if args.replay:
+                if args.timeframe == 'daily':
+                    data1.addfilter(ReplayerDaily)
+                elif args.timeframe == 'weekly':
+                    data1.addfilter(ReplayerWeekly)
+                elif args.timeframe == 'monthly':
+                    data1.addfilter(ReplayerMonthly)
+                print("not args.noresample and not args.oldrs and args.replay and args.timeframe" )
+            else:
+                if args.timeframe == 'daily':
+                    data1.addfilter(ResamplerDaily)
+                elif args.timeframe == 'weekly':
+                    data1.addfilter(ResamplerWeekly)
+                elif args.timeframe == 'monthly':
+                    data1.addfilter(ResamplerMonthly)
+                print("not args.noresample and not args.oldrs and not args.replay and args.timeframe ")
+
+    if args.noresample:
+        datapath = args.dataname2 or './datas/2006-month-001.txt'
         data2 = btfeeds.BacktraderCSVData(
             dataname=datapath)
     else:
@@ -157,6 +198,8 @@ def runstrat():
     # First add the original data - smaller timeframe
     cerebro.adddata(data)
 
+    cerebro.adddata(data1)
+
     # And then the large timeframe
     cerebro.adddata(data2)
 
@@ -177,6 +220,9 @@ def parse_args():
 
     parser.add_argument('--dataname', default='', required=False,
                         help='File Data to Load')
+
+    parser.add_argument('--dataname1', default='', required=False,
+                        help='Larger timeframe file to load')
 
     parser.add_argument('--dataname2', default='', required=False,
                         help='Larger timeframe file to load')

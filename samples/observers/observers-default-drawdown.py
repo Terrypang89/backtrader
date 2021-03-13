@@ -69,7 +69,6 @@ class MyStrategy(bt.Strategy):
             self.log('BUY CREATE, %.2f' % self.data.close[0])
             self.buy()
 
-
 def runstrat():
     cerebro = bt.Cerebro()
 
