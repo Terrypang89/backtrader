@@ -58,7 +58,6 @@ class NonZeroDifference(Indicator):
             d = d0array[i] - d1array[i]
             larray[i] = prev = d if d else prev
 
-
 class _CrossBase(Indicator):
     _mindatas = 2
 

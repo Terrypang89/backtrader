@@ -8,7 +8,7 @@ import backtrader.feeds as btfeeds
 
 import pandas
 
-pandas.show_versions(as_json=False)
+# pandas.show_versions(as_json=False)
 
 def runstrat():
     args = parse_args() #add ArgumentParser for pandas

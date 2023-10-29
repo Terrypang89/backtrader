@@ -87,7 +87,6 @@ class _DirectionalIndicator(Indicator):
 
     def __init__(self, _plus=True, _minus=True):
         atr = ATR(self.data, period=self.p.period, movav=self.p.movav)
-
         upmove = self.data.high - self.data.high(-1)
         downmove = self.data.low(-1) - self.data.low
 

@@ -24,6 +24,7 @@ from __future__ import (absolute_import, division, print_function,
 import argparse
 
 import backtrader as bt
+import itertools
 
 
 class St0(bt.SignalStrategy):
@@ -32,6 +33,23 @@ class St0(bt.SignalStrategy):
         crossover = bt.ind.CrossOver(sma1, sma2)
         self.signal_add(bt.SIGNAL_LONG, crossover)
 
+    def next(self):
+        for i in range(0, len(self.datas)):
+            self_datanum = "self.data" + str(i)
+            txt = list()
+            txt.append(type(self).__name__)
+            txt.append(f"Data{i}")
+            txt.append('{:s}'.format(eval(self_datanum)._name))
+            txt.append('%04d' %(len(eval(self_datanum))))
+            txt.append(f'{eval(self_datanum).datetime[0]}')
+            txt.append('%s' %(eval(self_datanum).datetime.datetime(0).strftime('%Y-%m-%dT%H:%M:%S.%f')))
+            txt.append('{:f}'.format(eval(self_datanum).high[0]))
+            txt.append('{:f}'.format(eval(self_datanum).low[0]))
+            txt.append('{:f}'.format(eval(self_datanum).close[0]))
+            txt.append('{:6d}'.format(int(eval(self_datanum).volume[0])))
+            txt.append('{:d}'.format(int(eval(self_datanum).openinterest[0])))
+            print(', '.join(txt))
+
 
 class St1(bt.SignalStrategy):
     def __init__(self):
@@ -39,6 +57,22 @@ class St1(bt.SignalStrategy):
         crossover = bt.ind.CrossOver(self.data.close, sma1)
         self.signal_add(bt.SIGNAL_LONG, crossover)
 
+    def next(self):
+        for i in range(0, len(self.datas)):
+            self_datanum = "self.data" + str(i)
+            txt = list()
+            txt.append(type(self).__name__)
+            txt.append(f"Data{i}")
+            txt.append('{:s}'.format(eval(self_datanum)._name))
+            txt.append('%04d' %(len(eval(self_datanum))))
+            txt.append(f'{eval(self_datanum).datetime[0]}')
+            txt.append('%s' %(eval(self_datanum).datetime.datetime(0).strftime('%Y-%m-%dT%H:%M:%S.%f')))
+            txt.append('{:f}'.format(eval(self_datanum).high[0]))
+            txt.append('{:f}'.format(eval(self_datanum).low[0]))
+            txt.append('{:f}'.format(eval(self_datanum).close[0]))
+            txt.append('{:6d}'.format(int(eval(self_datanum).volume[0])))
+            txt.append('{:d}'.format(int(eval(self_datanum).openinterest[0])))
+            print(', '.join(txt))
 
 class StFetcher(object):
     _STRATS = [St0, St1]
@@ -66,7 +100,6 @@ def runstrat(pargs=None):
         rets = strat.analyzers.returns.get_analysis()
         print('Strat {} Name {}:\n  - analyzer: {}\n'.format(
             i, strat.__class__.__name__, rets))
-
 
 def parse_args(pargs=None):
 

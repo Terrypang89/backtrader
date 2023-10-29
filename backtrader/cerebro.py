@@ -912,6 +912,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         can be referenced
         '''
         self.strats.append([(strategy, args, kwargs)])
+        self.strats.append([(strategy, args, kwargs)])
         return len(self.strats) - 1
 
     def setbroker(self, broker):
